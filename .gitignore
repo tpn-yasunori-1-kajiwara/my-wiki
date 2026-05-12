@@ -3,3 +3,7 @@
 Thumbs.db
 *.tmp
 *~
+
+# scheduler artifacts
+.ingest.log
+.ingest.lock

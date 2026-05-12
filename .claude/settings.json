@@ -6,13 +6,15 @@
       "Write",
       "Glob",
       "Grep",
+      "WebFetch",
       "Bash(git status)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "PowerShell(Get-ChildItem:*)",
-      "PowerShell(Test-Path:*)"
+      "PowerShell(Test-Path:*)",
+      "PowerShell(Select-String:*)"
     ]
   }
 }
