@@ -7,3 +7,7 @@ Thumbs.db
 # scheduler artifacts
 .ingest.log
 .ingest.lock
+
+# raw sources (一次資料は GitHub に上げない)
+raw/*
+!raw/.gitkeep
