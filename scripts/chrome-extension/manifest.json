@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Wiki に登録",
+  "version": "1.0.0",
+  "description": "現在のページ、選択範囲、リンク先を個人 wiki の raw/ に登録します (localhost:7777 経由)。",
+  "permissions": ["contextMenus", "notifications"],
+  "host_permissions": ["http://localhost:7777/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Wiki デーモン状態 (クリックで /health)"
+  },
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}

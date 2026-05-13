@@ -8,6 +8,9 @@ Thumbs.db
 .ingest.log
 .ingest.lock
 
+# secrets (proxy パスワード入り) — push しない。共有用テンプレは wiki-daemon_temp.ps1
+scripts/wiki-daemon.ps1
+
 # raw sources (一次資料は GitHub に上げない)
 raw/*
 !raw/.gitkeep
