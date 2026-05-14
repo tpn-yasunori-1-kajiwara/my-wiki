@@ -14,8 +14,8 @@
 
 ```
 my-wiki/
-├── raw/                          # 一次資料の投入先 (不変層 / git 管理外)
-├── wiki/                         # AI が管理する Markdown 知識ベース
+├── raw/                          # 一次資料の投入先 (不変層 / gitignore 済)
+├── wiki/                         # AI が管理する Markdown 知識ベース (gitignore 済)
 ├── scripts/
 │   ├── wiki-daemon.ps1           # ★ 本番用 (proxy 入り / gitignore 済)
 │   ├── wiki-daemon_temp.ps1      # ★ 共有用テンプレ (proxy 空欄)
@@ -24,9 +24,15 @@ my-wiki/
 │   ├── send-to-wiki.ps1          # 「送る」のハンドラ (ファイルを raw/ へ移動)
 │   ├── uninstall.ps1             # タスク + .lnk を全部撤去
 │   └── chrome-extension/         # 右クリック「Wiki に登録」拡張
+├── .claude/
+│   ├── commands/
+│   │   ├── ingest.md             # /ingest スラッシュコマンド定義
+│   │   ├── lint.md               # /lint
+│   │   └── query.md              # /query
+│   └── settings.json             # ツール権限許可リスト
 ├── CLAUDE.md                     # AI 向け運用ルール (schema 層)
 ├── README.md                     # このファイル
-└── .gitignore                    # raw/, .ingest.log, wiki-daemon.ps1 など
+└── .gitignore                    # raw/, wiki/, .ingest.log, wiki-daemon.ps1 など
 ```
 
 ---
@@ -267,13 +273,14 @@ Start-ScheduledTask -TaskName MyWikiDaemon
 ```powershell
 cd C:\my-wiki
 git status
-git add wiki/ scripts/wiki-daemon_temp.ps1 ...   # 個別に追加するのが安全
+git add CLAUDE.md scripts/wiki-daemon_temp.ps1 .claude/ ...   # 個別に追加するのが安全
 git commit -m "..."
 git push
 ```
 
 `.gitignore` で除外しているもの:
 - `raw/*`（一次資料は外部公開しない）
+- `wiki/*`（個人ナレッジは外部公開しない）
 - `wiki-daemon.ps1`（proxy パスワード入り）
 - `.ingest.log` / `.ingest.lock`
 
