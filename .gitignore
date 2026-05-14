@@ -14,3 +14,7 @@ scripts/wiki-daemon.ps1
 # raw sources (一次資料は GitHub に上げない)
 raw/*
 !raw/.gitkeep
+
+# wiki contents (個人ナレッジは GitHub に上げない)
+wiki/*
+!wiki/.gitkeep
