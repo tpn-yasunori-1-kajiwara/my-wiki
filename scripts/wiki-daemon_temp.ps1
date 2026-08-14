@@ -44,11 +44,17 @@ try {
 
 function Write-Log($msg) {
   $line = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $msg"
-  # AV のリアルタイムスキャン等でログファイルが一時ロックされると Add-Content が失敗し
-  # 行が黙って消える（2026-08-12 に発生）ため、短いリトライを入れる。
+  # AV のリアルタイムスキャン等でログファイルが一時ロックされると行が黙って消える
+  # （2026-08-12 / 08-14 に発生）。リトライだけでは不安定なため、FileShare.ReadWrite で
+  # 追記オープンする（wiki「社内GCPアプリ開発ルール」2026-08-14 実測知見と同じ対処）。
   for ($i = 0; $i -lt 8; $i++) {
-    try { $line | Add-Content -LiteralPath $logFile -Encoding utf8; break }
-    catch { Start-Sleep -Milliseconds 500 }
+    try {
+      $fs = New-Object IO.FileStream($logFile, [IO.FileMode]::Append, [IO.FileAccess]::Write, [IO.FileShare]::ReadWrite)
+      $sw = New-Object IO.StreamWriter($fs, (New-Object Text.UTF8Encoding($false)))
+      $sw.WriteLine($line)
+      $sw.Close()
+      break
+    } catch { Start-Sleep -Milliseconds 500 }
   }
   Write-Host $line
 }
