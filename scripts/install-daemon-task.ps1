@@ -29,7 +29,19 @@ $action = New-ScheduledTaskAction `
   -Execute 'powershell.exe' `
   -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$scriptPath`""
 
-$trigger = New-ScheduledTaskTrigger -AtLogOn -User "$env:USERDOMAIN\$env:USERNAME"
+# ログオンの 3 分後に起動する。
+# ログオン直後はウイルス対策 (Trend Micro Apex One) のスキャン・挙動監視が集中し、
+# 起動直後のデーモンが強制終了 (0xC000013A) される事象が発生したため (2026-08-12 / 08-14)。
+$logonTrigger = New-ScheduledTaskTrigger -AtLogOn -User "$env:USERDOMAIN\$env:USERNAME"
+$logonTrigger.Delay = 'PT3M'
+
+# ウォッチドッグ: 30 分ごとに起動を試みる。
+# デーモン生存中は MultipleInstances=IgnoreNew により無視され（副作用なし）、
+# 何らかの理由で死んでいたら 30 分以内に自動復活する（自己回復）。
+# ※ 万一トリガーが同時多発してもデーモン側がポート使用中を検知して exit 0 する。
+$watchdogTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date `
+  -RepetitionInterval (New-TimeSpan -Minutes 30) `
+  -RepetitionDuration (New-TimeSpan -Days 3650)
 
 $settings = New-ScheduledTaskSettingsSet `
   -StartWhenAvailable `
@@ -48,7 +60,7 @@ $principal = New-ScheduledTaskPrincipal `
 Register-ScheduledTask `
   -TaskName $TaskName `
   -Action $action `
-  -Trigger $trigger `
+  -Trigger $logonTrigger, $watchdogTrigger `
   -Settings $settings `
   -Principal $principal `
   -Description 'My Wiki daemon: HTTP register (localhost:7777) + raw/ watcher + auto /ingest' `

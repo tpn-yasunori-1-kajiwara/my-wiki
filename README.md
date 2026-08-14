@@ -87,7 +87,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\install-daemon-task.
 ```
 
 - タスク名: `MyWikiDaemon`
-- トリガー: **ログオン時**（PC 電源 ON → サインイン後に自動起動）
+- トリガー1: **ログオンの 3 分後**（ログオン直後は AV/EDR のスキャンが集中しプロセスが強制終了されることがあるため遅延。2026-08-14 対策）
+- トリガー2: **30 分ごとのウォッチドッグ**（デーモンが何らかの理由で死んでいたら自動復活。生存中は `MultipleInstances=IgnoreNew` により何もしない）
 - ウィンドウ非表示・実行時間制限なし・失敗時 3 回まで再起動
 - 旧 `MyWikiIngestPoll`（10 分ポーリング）があれば自動撤去
 
@@ -175,6 +176,11 @@ Invoke-RestMethod -Method POST -Uri http://localhost:7777/register `
 3. **デバウンス**: 新規ファイル検出から **30 秒静まる** と `claude -p /ingest --permission-mode bypassPermissions --output-format stream-json` を起動
 
 二重起動防止に `.ingest.lock` を使用。30 分以上経過したロックは「stale」として自動削除。
+
+堅牢化（2026-08-14）:
+- ポートが既に使用中なら「別インスタンス稼働中」とみなし exit 0（ウォッチドッグトリガーの空振りを正常系として扱う）
+- ログ書き込みは 3 回リトライ（AV のリアルタイムスキャンによる一時ロックで行が消えるのを防止）
+- `claude.exe` の出力を UTF-8 で受ける（従来は CP932 で受けて API エラー文が文字化けし、原因調査が不可能だった）
 
 ### ログ
 

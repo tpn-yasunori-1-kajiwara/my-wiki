@@ -1,0 +1,10 @@
+# ripgrep (Claude Code の Grep ツール含む) 用の除外解除。
+# .gitignore の `wiki/*` は「GitHub に上げない」ためのルールだが、
+# ripgrep がこれを尊重して wiki/ 配下が全文検索できなくなる
+# (AI 分身・Claude Code の Grep が常に "No files found" になる)。
+# .ignore は .gitignore より優先されるため、検索についてのみ再包含する。
+# (2026-07-23 設置。git の追跡状態には一切影響しない)
+!wiki/
+!wiki/**
+!raw/
+!raw/**

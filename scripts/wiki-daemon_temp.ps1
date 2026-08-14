@@ -35,9 +35,21 @@ $env:HTTP_PROXY  = "XXXXX"
 $env:HTTPS_PROXY = "XXXXX"
 $env:NO_PROXY    = "localhost,127.0.0.1,::1"
 
+# claude.exe の出力は UTF-8。既定の CP932 のまま受けるとログが文字化けして
+# エラー内容が読めなくなる（2026-08-14 判明）ため、明示的に UTF-8 で受ける。
+try {
+  [Console]::OutputEncoding = [Text.Encoding]::UTF8
+  $OutputEncoding = [Text.Encoding]::UTF8
+} catch {}
+
 function Write-Log($msg) {
   $line = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $msg"
-  try { $line | Add-Content -LiteralPath $logFile -Encoding utf8 } catch {}
+  # AV のリアルタイムスキャン等でログファイルが一時ロックされると Add-Content が失敗し
+  # 行が黙って消える（2026-08-12 に発生）ため、短いリトライを入れる。
+  for ($i = 0; $i -lt 8; $i++) {
+    try { $line | Add-Content -LiteralPath $logFile -Encoding utf8; break }
+    catch { Start-Sleep -Milliseconds 500 }
+  }
   Write-Host $line
 }
 
@@ -206,10 +218,18 @@ $listener.Prefixes.Add("http://localhost:$Port/")
 try {
   $listener.Start()
 } catch {
+  # ウォッチドッグトリガー（30分ごと）で起動された際、既に別インスタンスが
+  # ポートを掴んでいたら、それは正常系。静かに終了する。
+  $portBusy = $false
+  try { $portBusy = [bool](Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue) } catch {}
+  if ($portBusy) {
+    Write-Log "already running: port $Port in use — exit 0 (watchdog no-op)"
+    exit 0
+  }
   Write-Log "fatal: cannot bind port $Port — $($_.Exception.Message)"
   throw
 }
-Write-Log "daemon start: port=$Port debounce=${DebounceSeconds}s rawDir=$rawDir"
+Write-Log "daemon start: pid=$PID port=$Port debounce=${DebounceSeconds}s rawDir=$rawDir"
 
 # 起動時バックログ検出: raw/ にあるが wiki/*.md の sources: に未記録のファイルがあれば、
 # 30 秒後に一回だけ /ingest を起動するよう $lastChange を仕掛ける。
